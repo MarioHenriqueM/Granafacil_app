@@ -1,0 +1,17 @@
+{
+  "_comment": "Mock Open Finance Brasil (schema fase 2 — transacional). Perfil: negação típica.",
+  "profileId": "negado-tipico",
+  "persona": "Autônomo — renda esporádica e saldo crítico",
+  "cpf": "***.***.***-**",
+  "windowDays": 90,
+  "transactions": [
+    { "date": "2026-01-10", "type": "CREDIT", "amount": 90.00,  "source": "iFood" },
+    { "date": "2026-01-22", "type": "DEBIT",  "amount": 120.00, "source": "Mercado" },
+    { "date": "2026-02-05", "type": "CREDIT", "amount": 60.00,  "source": "Uber" }
+  ],
+  "summary": {
+    "avgMonthlyBalance": -45.00,
+    "entriesPerMonth": 3,
+    "negativeDaysRatio": 0.55
+  }
+}

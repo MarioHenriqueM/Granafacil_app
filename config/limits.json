@@ -1,0 +1,18 @@
+{
+  "_comment": "Limites globais de crédito e parâmetros de cálculo. Ajustável sem deploy.",
+  "version": "0.1.0-alpha",
+  "credit": {
+    "minLimit": 100,
+    "maxLimit": 5000,
+    "defaultLimit": 500,
+    "currency": "BRL"
+  },
+  "analysis": {
+    "windowDays": 90,
+    "minTransactionsRequired": 10
+  },
+  "score": {
+    "minScore": 0,
+    "maxScore": 1000
+  }
+}

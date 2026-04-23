@@ -1,0 +1,14 @@
+{
+  "_comment": "Pesos dos componentes do score comportamental. Soma deve ser 1.0.",
+  "version": "0.1.0-alpha",
+  "weights": {
+    "frequency": 0.35,
+    "regularity": 0.30,
+    "balance": 0.25,
+    "diversity": 0.10
+  },
+  "penalties": {
+    "negativeBalanceDay": -2,
+    "longGapBetweenEntries": -5
+  }
+}

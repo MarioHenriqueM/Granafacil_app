@@ -1,0 +1,21 @@
+{
+  "_comment": "Dicionário de regras de compliance (LGPD + políticas internas).",
+  "version": "0.1.0-alpha",
+  "lgpd": {
+    "consentRequired": true,
+    "consentGranular": true,
+    "consentRevocable": true,
+    "dataRetentionDays": 365,
+    "auditLogImmutable": true,
+    "legalBasis": "consent"
+  },
+  "denialReasons": {
+    "LOW_FREQUENCY": "Frequência de entradas abaixo do mínimo exigido pelo preset.",
+    "NEGATIVE_BALANCE": "Saldo negativo em percentual significativo do período analisado.",
+    "LOW_BALANCE": "Saldo médio do período abaixo do mínimo exigido.",
+    "LOW_SCORE": "Score final abaixo do limiar de aprovação do preset.",
+    "INSUFFICIENT_DATA": "Janela de dados insuficiente para análise confiável.",
+    "CONSENT_MISSING": "Consentimento LGPD não registrado ou revogado."
+  },
+  "approvalTemplate": "Aprovado: {frequencySummary}; {balanceSummary}."
+}

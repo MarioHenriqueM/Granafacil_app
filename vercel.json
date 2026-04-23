@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build:ui",
+  "outputDirectory": "dist/ui",
+  "framework": null,
+  "rewrites": [
+    { "source": "/consent/:path*", "destination": "https://REPLACE_WITH_RENDER_URL/consent/:path*" },
+    { "source": "/consent", "destination": "https://REPLACE_WITH_RENDER_URL/consent" },
+    { "source": "/ingest", "destination": "https://REPLACE_WITH_RENDER_URL/ingest" },
+    { "source": "/decision", "destination": "https://REPLACE_WITH_RENDER_URL/decision" },
+    { "source": "/pix/:path*", "destination": "https://REPLACE_WITH_RENDER_URL/pix/:path*" },
+    { "source": "/health", "destination": "https://REPLACE_WITH_RENDER_URL/health" }
+  ]
+}

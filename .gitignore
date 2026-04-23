@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+*.log
+.DS_Store
+.vscode/
+*.db
+*.db-journal
+prisma/dev.db
+prisma/test.db
+src/generated/
+.claude

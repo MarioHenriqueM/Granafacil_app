@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String        @id @default(cuid())
+  email     String        @unique
+  createdAt DateTime      @default(now())
+  consents  Consent[]
+  snapshots Snapshot[]
+  decisions DecisionLog[]
+  sessions  Session[]
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  tokenHash String    @unique
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  @@index([userId])
+}
+
+model Consent {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  grantedAt  DateTime  @default(now())
+  revokedAt  DateTime?
+  scope      String
+  legalBasis String    @default("consent")
+
+  @@index([userId])
+}
+
+model Snapshot {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  profileId String
+  hash      String
+  payload   String
+  createdAt DateTime      @default(now())
+  decisions DecisionLog[]
+
+  @@index([userId])
+  @@index([hash])
+}
+
+model DecisionLog {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  snapshotId   String
+  snapshot     Snapshot @relation(fields: [snapshotId], references: [id])
+  profileId    String
+  score        Int
+  approved     Boolean
+  creditLimit  Float?
+  denialReason String?
+  explanation  String
+  prevHash     String?
+  rowHash      String   @unique
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([snapshotId])
+}

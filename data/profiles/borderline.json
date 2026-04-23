@@ -1,0 +1,18 @@
+{
+  "_comment": "Mock Open Finance Brasil (schema fase 2 — transacional). Perfil: borderline (sensível ao preset ativo).",
+  "profileId": "borderline",
+  "persona": "Entregador — frequência média, saldo oscilante",
+  "cpf": "***.***.***-**",
+  "windowDays": 90,
+  "transactions": [
+    { "date": "2026-01-15", "type": "CREDIT", "amount": 130.00, "source": "iFood" },
+    { "date": "2026-01-20", "type": "CREDIT", "amount": 140.00, "source": "Rappi" },
+    { "date": "2026-01-25", "type": "DEBIT",  "amount": 90.00,  "source": "Aluguel" },
+    { "date": "2026-02-01", "type": "CREDIT", "amount": 150.00, "source": "iFood" }
+  ],
+  "summary": {
+    "avgMonthlyBalance": 280.00,
+    "entriesPerMonth": 9,
+    "negativeDaysRatio": 0.28
+  }
+}

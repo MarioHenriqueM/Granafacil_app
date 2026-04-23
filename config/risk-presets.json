@@ -1,0 +1,25 @@
+{
+  "_comment": "Presets de risco definidos pelo Head de Risco. NUNCA armazenar credenciais aqui (ver REQUIREMENTS §RNF-05).",
+  "version": "0.1.0-alpha",
+  "presets": {
+    "conservative": {
+      "minFrequencyEntriesPerMonth": 12,
+      "maxNegativeDaysRatio": 0.15,
+      "minAvgMonthlyBalance": 500,
+      "approvalThreshold": 700
+    },
+    "balanced": {
+      "minFrequencyEntriesPerMonth": 8,
+      "maxNegativeDaysRatio": 0.30,
+      "minAvgMonthlyBalance": 200,
+      "approvalThreshold": 600
+    },
+    "aggressive": {
+      "minFrequencyEntriesPerMonth": 5,
+      "maxNegativeDaysRatio": 0.45,
+      "minAvgMonthlyBalance": 0,
+      "approvalThreshold": 500
+    }
+  },
+  "activePreset": "balanced"
+}
