@@ -1,11 +1,14 @@
 import { computeBalance } from './balance.js';
+import { filterCircular } from './circularity.js';
 import { computeFrequency } from './frequency.js';
 import { computeRegularity } from './regularity.js';
-import type { Profile, ScoreResult, Weights } from './types.js';
+import type { CircularityConfig, Profile, ScoreResult, Weights } from './types.js';
 
 const FREQ_FULL_SCORE_ENTRIES_PER_MONTH = 20;
 const BALANCE_FULL_SCORE_BRL = 2000;
 const MAX_SCORE = 1000;
+
+const DEFAULT_CIRCULARITY: CircularityConfig = { tolerancePct: 0.01, maxRatio: 0.5 };
 
 function clamp01(x: number): number {
   if (x < 0) return 0;
@@ -13,10 +16,17 @@ function clamp01(x: number): number {
   return x;
 }
 
-export function computeScore(profile: Profile, weights: Weights): ScoreResult {
-  const freq = computeFrequency(profile.transactions, profile.windowDays);
-  const reg = computeRegularity(profile.transactions, profile.windowDays);
-  const bal = computeBalance(profile.transactions, profile.windowDays);
+export function computeScore(
+  profile: Profile,
+  weights: Weights,
+  antifraudConfig: CircularityConfig = DEFAULT_CIRCULARITY,
+): ScoreResult {
+  const circ = filterCircular(profile.transactions, antifraudConfig);
+  const txs = circ.cleanedTransactions;
+
+  const freq = computeFrequency(txs, profile.windowDays);
+  const reg = computeRegularity(txs, profile.windowDays);
+  const bal = computeBalance(txs, profile.windowDays);
 
   const frequency = clamp01(freq.entriesPerMonth / FREQ_FULL_SCORE_ENTRIES_PER_MONTH);
   const regularity = clamp01(reg.score);
@@ -35,6 +45,6 @@ export function computeScore(profile: Profile, weights: Weights): ScoreResult {
   return {
     score,
     components: { frequency, regularity, balance, diversity },
-    raw: { freq, reg, bal },
+    raw: { freq, reg, bal, circ },
   };
 }

@@ -3,18 +3,34 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String        @id @default(cuid())
-  email     String        @unique
-  createdAt DateTime      @default(now())
-  consents  Consent[]
-  snapshots Snapshot[]
-  decisions DecisionLog[]
-  sessions  Session[]
+  id           String              @id @default(cuid())
+  email        String              @unique
+  createdAt    DateTime            @default(now())
+  consents     Consent[]
+  snapshots    Snapshot[]
+  decisions    DecisionLog[]
+  sessions     Session[]
+  fingerprints DeviceFingerprint[]
+}
+
+model DeviceFingerprint {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  deviceHash  String?
+  ipHash      String
+  userAgent   String?
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([deviceHash])
+  @@index([ipHash])
 }
 
 model Session {

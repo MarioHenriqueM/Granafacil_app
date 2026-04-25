@@ -1,11 +1,12 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
+import antifraudJson from '../../config/antifraud.json';
 import limitsJson from '../../config/limits.json';
 import presetsJson from '../../config/risk-presets.json';
 import weightsJson from '../../data/weights.json';
 import { decide, type LimitsConfig } from '../logic/decide.js';
 import { explainScore } from '../logic/explain.js';
-import type { Profile, RiskPreset, Weights } from '../logic/types.js';
+import type { AntifraudConfig, Profile, RiskPreset, Weights } from '../logic/types.js';
 import { appendDecisionWithChain } from './audit.js';
 import { requireAuth } from './auth.js';
 import { hasActiveConsent } from './consent.js';
@@ -16,6 +17,7 @@ const weights = weightsJson as unknown as Weights;
 const limits = limitsJson as unknown as LimitsConfig;
 const presets = presetsJson.presets as Record<string, RiskPreset>;
 const activePreset = presets[presetsJson.activePreset];
+const antifraud = antifraudJson as unknown as AntifraudConfig;
 
 if (!activePreset) {
   throw new Error(`Active preset "${presetsJson.activePreset}" not found in risk-presets.json`);
@@ -40,7 +42,7 @@ export const decisionRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const profile = JSON.parse(snapshot.payload) as Profile;
-    const result = decide(profile, weights, activePreset, limits);
+    const result = decide(profile, weights, activePreset, limits, antifraud.circularity);
     const explanation = explainScore(result.scoreResult, {
       approved: result.approved,
       limit: result.creditLimit,

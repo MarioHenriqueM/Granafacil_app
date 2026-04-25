@@ -3,6 +3,10 @@ import { z } from 'zod';
 export const grantConsentSchema = z.object({
   email: z.string().email().max(254),
   scope: z.record(z.string(), z.boolean()),
+  deviceHash: z
+    .string()
+    .regex(/^[a-f0-9]{8,128}$/i, 'deviceHash must be hex 8-128 chars')
+    .optional(),
 });
 
 export const ingestSchema = z.object({

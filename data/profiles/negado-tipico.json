@@ -1,7 +1,17 @@
 {
   "_comment": "Mock Open Finance Brasil (schema fase 2 — transacional). Perfil: negação típica.",
   "profileId": "negado-tipico",
-  "persona": "Autônomo — renda esporádica e saldo crítico",
+  "persona": "Pedro Almeida, 28 anos — entregador iFood esporádico (Rio de Janeiro, RJ)",
+  "client": {
+    "name": "Pedro Almeida",
+    "age": 28,
+    "city": "Rio de Janeiro, RJ",
+    "occupation": "Entregador esporádico (iFood) e bicos avulsos",
+    "tenureYears": 1,
+    "familyStatus": "Solteiro, mora com a mãe",
+    "goal": "Solicita R$ 800 para emergência médica do filho",
+    "bio": "Trabalha de forma irregular — alterna semanas ativas com longos períodos parado. Não possui veículo próprio (aluga moto). Saldo bancário frequentemente negativo, sem reserva financeira. Tentou crédito em 2 fintechs nos últimos 6 meses, ambas recusaram por falta de comprovação de renda."
+  },
   "cpf": "***.***.***-**",
   "windowDays": 90,
   "transactions": [

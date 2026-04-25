@@ -3,7 +3,7 @@ import { ConsentStep } from './components/ConsentStep.js';
 import { DecisionStep } from './components/DecisionStep.js';
 import { IngestStep } from './components/IngestStep.js';
 import { PixStep } from './components/PixStep.js';
-import type { DecisionResponse } from './api.js';
+import { api, type DecisionResponse } from './api.js';
 
 type Step = 'consent' | 'ingest' | 'decision' | 'pix';
 
@@ -18,12 +18,16 @@ const STEP_ORDER: Step[] = ['consent', 'ingest', 'decision', 'pix'];
 
 export function App() {
   const [step, setStep] = useState<Step>('consent');
+  const [email, setEmail] = useState<string>('');
   const [snapshotId, setSnapshotId] = useState<string | null>(null);
   const [snapshotHash, setSnapshotHash] = useState<string>('');
   const [persona, setPersona] = useState<string>('');
   const [decision, setDecision] = useState<DecisionResponse | null>(null);
 
-  const onConsent = useCallback(() => setStep('ingest'), []);
+  const onConsent = useCallback((grantedEmail: string) => {
+    setEmail(grantedEmail);
+    setStep('ingest');
+  }, []);
 
   const onIngested = useCallback((sid: string, hash: string, p: string) => {
     setSnapshotId(sid);
@@ -34,13 +38,52 @@ export function App() {
 
   const onDecided = useCallback((d: DecisionResponse) => setDecision(d), []);
 
+  const onReset = useCallback(() => {
+    api.clearSession();
+    setEmail('');
+    setSnapshotId(null);
+    setSnapshotHash('');
+    setPersona('');
+    setDecision(null);
+    setStep('consent');
+  }, []);
+
   const currentIdx = STEP_ORDER.indexOf(step);
+  const hasSession = email !== '' || snapshotId !== null;
 
   return (
     <main className="app">
       <header>
-        <h1>OpenScore GSD</h1>
-        <p>Motor de crédito para a economia gig — Alpha</p>
+        <div className="header-row">
+          <div>
+            <h1>GranaFacil</h1>
+            <p>Motor de crédito para a economia gig — Alpha</p>
+          </div>
+          {hasSession && (
+            <button
+              type="button"
+              className="secondary reset-btn"
+              onClick={onReset}
+              aria-label="Reiniciar demo (limpa sessão e estado local)"
+            >
+              Reiniciar demo
+            </button>
+          )}
+        </div>
+        {hasSession && (
+          <div className="session-badge" role="status" aria-live="polite">
+            {email && (
+              <span>
+                Sessão: <strong>{email}</strong>
+              </span>
+            )}
+            {persona && (
+              <span>
+                Perfil: <strong>{persona}</strong>
+              </span>
+            )}
+          </div>
+        )}
       </header>
 
       <nav aria-label="Progresso">
@@ -84,7 +127,7 @@ export function App() {
       {step === 'pix' && decision && <PixStep decision={decision} />}
 
       <footer>
-        Versão 0.1.0-alpha · GSD · Dados mockados (Open Finance) · Pix simulado
+        Versão 0.1.0-alpha · Dados mockados (Open Finance) · Pix simulado
       </footer>
     </main>
   );

@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { decide, type LimitsConfig } from '../../src/logic/decide.js';
-import type { Profile, RiskPreset, Weights } from '../../src/logic/types.js';
+import type { AntifraudConfig, Profile, RiskPreset, Weights } from '../../src/logic/types.js';
 import weightsJson from '../../data/weights.json';
 import limitsJson from '../../config/limits.json';
 import presetsJson from '../../config/risk-presets.json';
+import antifraudJson from '../../config/antifraud.json';
+import fraudeCircular from '../../data/profiles/fraude-circular.json';
 
 const weights = weightsJson as unknown as Weights;
 const limits = limitsJson as unknown as LimitsConfig;
 const preset = (presetsJson.presets as Record<string, RiskPreset>)[presetsJson.activePreset]!;
+const antifraud = antifraudJson as unknown as AntifraudConfig;
 
 const mkProfile = (transactions: Profile['transactions'], windowDays = 30): Profile => ({
   profileId: 't',
@@ -90,6 +93,15 @@ describe('decide', () => {
     }));
     const d = decide(mkProfile(txs, 30), weights, preset, limits);
     expect(d.creditLimit! % 50).toBe(0);
+  });
+
+  it('denies fraude-circular fixture with CIRCULARITY_SUSPECT', () => {
+    const profile = fraudeCircular as unknown as Profile;
+    const d = decide(profile, weights, preset, limits, antifraud.circularity);
+    expect(d.approved).toBe(false);
+    expect(d.denialReason).toBe('CIRCULARITY_SUSPECT');
+    expect(d.scoreResult.raw.circ.pairsRemoved).toBeGreaterThanOrEqual(10);
+    expect(d.scoreResult.raw.circ.circularityRatio).toBeGreaterThan(0.5);
   });
 
   it('denies with LOW_BALANCE when avgMonthlyBalance below preset minimum', () => {

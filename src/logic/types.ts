@@ -53,6 +53,27 @@ export interface BalanceResult {
   endBalance: number;
 }
 
+export interface CircularityResult {
+  pairsRemoved: number;
+  totalCreditsOriginal: number;
+  circularityRatio: number;
+  cleanedTransactions: Transaction[];
+}
+
+export interface CircularityConfig {
+  tolerancePct: number;
+  maxRatio: number;
+}
+
+export interface AntifraudConfig {
+  circularity: CircularityConfig;
+  deviceFingerprint: {
+    lookbackDays: number;
+    maxUsersPerDevice: number;
+    maxUsersPerIp: number;
+  };
+}
+
 export interface ScoreResult {
   score: number;
   components: {
@@ -65,5 +86,6 @@ export interface ScoreResult {
     freq: FrequencyResult;
     reg: RegularityResult;
     bal: BalanceResult;
+    circ: CircularityResult;
   };
 }

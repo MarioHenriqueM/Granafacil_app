@@ -1,0 +1,15 @@
+{
+  "_comment": "Parâmetros antifraude. NUNCA armazenar credenciais aqui (ver REQUIREMENTS §RNF-05).",
+  "version": "0.1.0-alpha",
+  "circularity": {
+    "_comment": "Pares CREDIT+DEBIT no mesmo dia UTC com diferença <= tolerancePct são removidos do score. Se pairsRemoved/totalCredits > maxRatio, decisão é negada.",
+    "tolerancePct": 0.01,
+    "maxRatio": 0.5
+  },
+  "deviceFingerprint": {
+    "_comment": "Janela em dias + limites de userIds distintos por device/IP. IP é sempre hasheado com FRAUD_SALT. maxUsersPerIp é tolerante por causa de CGNAT/coworking.",
+    "lookbackDays": 7,
+    "maxUsersPerDevice": 3,
+    "maxUsersPerIp": 20
+  }
+}

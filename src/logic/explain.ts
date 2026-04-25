@@ -7,7 +7,7 @@ export interface DecisionSummary {
 }
 
 export function explainScore(score: ScoreResult, decision?: DecisionSummary): string {
-  const { freq, reg, bal } = score.raw;
+  const { freq, reg, bal, circ } = score.raw;
   const parts: string[] = [
     `Score: ${score.score}/1000.`,
     `Frequência: ${freq.entriesPerMonth.toFixed(1)} entradas/mês.`,
@@ -15,6 +15,12 @@ export function explainScore(score: ScoreResult, decision?: DecisionSummary): st
     `Saldo médio no período: R$ ${bal.avgMonthlyBalance.toFixed(2)}.`,
     `Dias com saldo negativo: ${(bal.negativeDaysRatio * 100).toFixed(0)}% do período.`,
   ];
+
+  if (circ.pairsRemoved > 0) {
+    parts.push(
+      `Antifraude: ${circ.pairsRemoved} par(es) circular(es) neutralizados (${(circ.circularityRatio * 100).toFixed(0)}% dos créditos).`,
+    );
+  }
 
   if (decision) {
     if (decision.approved) {

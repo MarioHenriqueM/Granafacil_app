@@ -1,8 +1,8 @@
-# STATE — OpenScore GSD
+# STATE — GranaFacil
 
-**Status atual:** `Alpha Feature-Complete (pending manual deploy + a11y audit)`
-**Data:** 2026-04-22
-**Próxima ação:** executar deploy (Render + Vercel) + rodar Lighthouse em browser.
+**Status atual:** `Alpha Feature-Complete + PostgreSQL migrado + Antifraude (pending manual deploy + a11y audit)`
+**Data:** 2026-04-24
+**Próxima ação:** executar deploy (Render + Vercel) + rodar Lighthouse em browser. Trocar `FRAUD_SALT` em produção.
 
 ---
 
@@ -27,8 +27,10 @@
 | 4 | UI & Consent Flow | 5 | 4 | 🟡 `in-progress` (4.5 carece de browser) |
 | 5 | Compliance, Security & Hardening | 5 | 5 | ✅ `done` |
 | 6 | Deploy & Alpha Release | 5 | 2 | 🟡 `in-progress` (6.2, 6.3, 6.5 carecem de ação externa) |
+| 7 | Database Migration to PostgreSQL | 7 | 7 | ✅ `done` |
+| 8 | Antifraud Layer | 9 | 9 | ✅ `done` |
 
-**Total:** 28/32 tasks concluídas (88%). As 4 restantes exigem ações fora do meu alcance (Lighthouse em browser, deploy Render/Vercel, git tag).
+**Total:** 44/48 tasks concluídas (91,7%). As 4 restantes exigem ações fora do meu alcance (Lighthouse em browser, deploy Render/Vercel, git tag).
 
 ---
 
@@ -50,10 +52,34 @@
 - **Hash chain** ([src/api/audit.ts](src/api/audit.ts)): `appendDecisionWithChain` calcula `rowHash = sha256(prevHash | campos | createdAt)`; `verifyChainIntegrity` detecta tampering. 2 testes cobrem cadeia e detecção.
 
 ### Phase 6 — Deploy artifacts
-- [.github/workflows/ci.yml](.github/workflows/ci.yml) — typecheck + test + build UI.
+- [.github/workflows/ci.yml](.github/workflows/ci.yml) — typecheck + test + build UI (agora com service container `postgres:16-alpine`).
 - [render.yaml](render.yaml) — web service Node, `migrate deploy`, `/health` como healthcheck.
 - [vercel.json](vercel.json) — build/output + rewrites para backend (placeholder `REPLACE_WITH_RENDER_URL`).
 - [scripts/smoke.ts](scripts/smoke.ts) — smoke test via `fetch` (`npm run smoke` local, `SMOKE_BASE_URL=...` pós-deploy).
+
+### Phase 8 — Antifraud Layer (2026-04-24)
+- [config/antifraud.json](config/antifraud.json) — parâmetros de circularidade (tolerancePct=0.01, maxRatio=0.5) e device fingerprinting (lookback 7d, maxUsersPerDevice=3, maxUsersPerIp=20).
+- [src/logic/circularity.ts](src/logic/circularity.ts) + [tests/logic/circularity.test.ts](tests/logic/circularity.test.ts) — função pura `filterCircular` neutraliza pares CREDIT+DEBIT do mesmo dia UTC com diferença dentro da tolerância. 8 testes unitários.
+- [src/logic/score.ts](src/logic/score.ts) / [src/logic/decide.ts](src/logic/decide.ts) / [src/logic/explain.ts](src/logic/explain.ts) — filtro roda antes de freq/reg/bal; `ScoreResult.raw.circ` exposto; `denialReason: CIRCULARITY_SUSPECT` se ratio > threshold; explicação cita pares neutralizados.
+- [data/profiles/fraude-circular.json](data/profiles/fraude-circular.json) — fixture com 11 pares circulares + 2 créditos genuínos → CIRCULARITY_SUSPECT validado em teste logic e API.
+- [prisma/schema.prisma](prisma/schema.prisma) — novo model `DeviceFingerprint`. Migration `20260424182414_add_device_fingerprint`.
+- [src/api/fingerprint.ts](src/api/fingerprint.ts) — `hashIp(ip)` com `FRAUD_SALT`; `checkAndRegisterFingerprint` bloqueia por deviceHash ou ipHash em janela `lookbackDays`.
+- [src/api/consent.ts](src/api/consent.ts) — gate antifraude após upsert de user, antes de criar consent. HTTP 429 com `error: device_limit_exceeded` ou `ip_limit_exceeded`.
+- [src/api/schemas.ts](src/api/schemas.ts) — `grantConsentSchema` aceita `deviceHash?: string` (hex 8-128).
+- [src/ui/api.ts](src/ui/api.ts) — `computeDeviceHash()` via canvas + navigator fingerprint + SHA-256, cacheado em `localStorage` e anexado em toda chamada de `grantConsent`.
+- [src/ui/components/IngestStep.tsx](src/ui/components/IngestStep.tsx) — opção "Fraude circular (PIX entra+sai mesmo dia)" adicionada ao select de perfis de teste.
+- [tests/api/fraud.test.ts](tests/api/fraud.test.ts) — 5 testes: device limit (3 OK + 4º bloqueado), não bloqueia devices distintos, upsert do mesmo user não conta múltiplas vezes, IP limit (20 OK + 21º bloqueado), fluxo e2e fraude-circular.
+- Verificação: 60/60 testes verdes; `npm run smoke` segue aprovando `aprovado-tipico` com score=672.
+
+### Phase 7 — PostgreSQL Migration (2026-04-24)
+- [docker-compose.yml](docker-compose.yml) — `postgres:16-alpine` em `localhost:5433`, healthcheck, volume nomeado.
+- [scripts/init-test-db.sql](scripts/init-test-db.sql) — cria `granafacil_test` no boot do container.
+- [prisma/schema.prisma](prisma/schema.prisma) — `provider = "postgresql"`.
+- [prisma/migrations/20260424133124_init](prisma/migrations/20260424133124_init/migration.sql) — migration regenerada para Postgres; migrations SQLite antigas removidas.
+- [tests/env.setup.ts](tests/env.setup.ts) + [tests/global.setup.ts](tests/global.setup.ts) — `DATABASE_URL` em Postgres, reset via `prisma db push --force-reset` por global setup.
+- [.github/workflows/ci.yml](.github/workflows/ci.yml) — service container postgres + envs.
+- [.env](.env) + [.env.example](.env.example) — atualizados com URL Postgres.
+- Verificação: 46/46 testes verdes em Postgres; `npm run smoke` com `aprovado-tipico` → `score=672`, aprovado.
 
 ---
 
@@ -71,7 +97,8 @@ Cobertura de testes:
 | Escopo | Suites | Testes | Cobertura |
 |--------|--------|--------|-----------|
 | `src/logic/` | 6 | 35 | 100% (statements/branches/functions/lines) |
-| `src/api/` | 2 (flow, audit) | 11 | via integração `app.inject` |
+| `src/api/` | 3 (flow, audit, fraud) | 16 | via integração `app.inject` |
+| `src/logic/circularity` | 1 | 8 | 100% |
 
 ---
 
@@ -91,7 +118,7 @@ Cobertura de testes:
 1. **ESLint não configurado.** Substituído por TS strict + Prettier.
 2. **Penalty `longGapBetweenEntries`** não aplicada — reservada para pós-Alpha.
 3. **Componente `diversity` = 0** (placeholder) — pós-Alpha.
-4. **SQLite para Alpha.** PROJECT.md pede PostgreSQL; troca é `provider = "postgresql"` + nova migration.
+4. ~~**SQLite para Alpha.**~~ **RESOLVIDO em Phase 7 (2026-04-24):** provider trocado para PostgreSQL, migration regenerada, harness de testes + CI adaptados. Stack agora consistente com PROJECT.md.
 5. **Prisma 7 → 6 (downgrade).** Prisma 7 exige `prisma.config.ts` + adapter; Prisma 6 tem padrão clássico.
 6. **Fastify 5 + Pino.** Não especificado em PROJECT.md (era "React"/Node genérico); Fastify escolhido por TS nativo + logger estruturado built-in.
 7. **Fixture `aprovado-tipico.json`** expandido de 5 → 35 transações.
@@ -115,6 +142,9 @@ Cobertura de testes:
 10. Pool de teste `forks` + `singleFork: true` serializa acesso ao SQLite.
 11. Session token em `localStorage` no UI (Alpha). Migração para cookie httpOnly é hardening pós-Alpha.
 12. Hash chain global (sequencial por ordem de criação) em vez de por-usuário — auditoria mais simples, linha única do tempo.
+13. **Antifraude circularidade** roda dentro de `computeScore` como pré-processamento (não penalty aditiva). Motivo: impedir inflação é função de "limpeza de sinal", não de punição proporcional — remove o ruído antes de medir.
+14. **IP armazenado sempre como SHA-256(IP+FRAUD_SALT)**, nunca em claro. Base legal LGPD: art. 7º X (prevenção à fraude/proteção ao crédito), não `consent`.
+15. **Upsert do User antes do gate antifraude**: emails repetidos retornam o mesmo userId e não inflam contagem de usuários distintos no device/IP — cobre reconexão legítima. Contagem é `distinct userId`, não `distinct tentativa`.
 
 ---
 
@@ -127,12 +157,20 @@ Cobertura de testes:
 | Migração SQLite → Postgres pode expor queries com diferenças sutis | Baixa | Queries Prisma são portáveis; testar em staging. |
 | Rate limit global 100 rpm pode ser agressivo para apps | Baixa | Tunar por rota quando houver tráfego real. |
 | Lighthouse a11y pode exigir ajustes | Baixa | HTML já segue padrões AA; provável pass direto. |
+| `FRAUD_SALT` padrão `dev-fraud-salt-change-me` se env ausente | Média em prod | Definir `FRAUD_SALT` longo e aleatório antes do deploy; rotacionar exige recomputar ipHash histórico (nova migration). |
+| Canvas fingerprint é burlável (anti-detect browsers) | Média | Cobre fraude oportunista; para ataques sofisticados exige provedor comercial de FP. Aceitável para Alpha. |
+| Regra `samedayUTC` pode deixar escapar crédito 23:55 + débito 00:05 | Baixa | Janela rolante de 24h é refinamento pós-Alpha (ajuste em `filterCircular`). |
+| `User` upsertado antes do gate fica como "zumbi" se gate bloquear | Baixa | Email fica "reservado" sem consent; não há superfície de ataque. Limpeza via job pós-Alpha. |
+| IP hash não expira automaticamente | Média (LGPD) | `lookbackDays` filtra por janela mas linhas antigas persistem. Job de retenção (180 dias?) fica para pós-Alpha. |
 
 ---
 
 ## Como executar localmente (referência rápida)
 
 ```bash
+# Infra
+docker compose up -d           # Postgres 16 em localhost:5433
+
 # Instalação
 npm install
 npx prisma generate

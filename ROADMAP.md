@@ -1,4 +1,4 @@
-# ROADMAP — OpenScore GSD
+# ROADMAP — GranaFacil
 
 > Framework: **GSD (Get Stuff Done)** — entregas atômicas, funcionais e verificáveis.
 > Derivado de [PROJECT.md](PROJECT.md) e [REQUIREMENTS.md](REQUIREMENTS.md).
@@ -95,7 +95,7 @@ Legenda de status: `pending` · `in-progress` · `blocked` · `done`
     <title>Configurar PostgreSQL + Prisma (schema: users, consents, decision_log)</title>
     <deliverable>prisma/schema.prisma + migration inicial</deliverable>
     <status>done</status>
-    <note>SQLite escolhido para Alpha (Prisma 6, migração `20260422202818_init`). Postgres é alvo de produção — troca de `provider` no schema + migration reset. Ver STATE.md §Desvios.</note>
+    <note>Inicialmente entregue em SQLite como desvio proposital para Alpha. Revertido em Phase 7 (2026-04-24): provider trocado para PostgreSQL, migration `20260424133124_init` regenerada, harness de testes adaptado. Stack agora consistente com PROJECT.md.</note>
   </task>
 
   <task id="3.2">
@@ -258,8 +258,119 @@ Legenda de status: `pending` · `in-progress` · `blocked` · `done`
 
 ---
 
+<phase id="8" name="Antifraud Layer">
+  <objective>Implementar RF-11 (filtro de circularidade no motor de score) e RF-12 (device fingerprinting no consent) conforme REQUIREMENTS §2 e RN-06/RN-07. Resposta a sinais de campo no Alpha.</objective>
+
+  <task id="8.1">
+    <title>Escrever specs (REQUIREMENTS §2/§4/§7 + ROADMAP Phase 8)</title>
+    <deliverable>RF-11, RF-12, RN-06, RN-07 e nota §7.8 registrados; Phase 8 no roadmap.</deliverable>
+    <status>done</status>
+  </task>
+
+  <task id="8.2">
+    <title>Criar config/antifraud.json</title>
+    <deliverable>Parâmetros: circularity.tolerancePct, circularity.maxRatio, deviceFp.maxUsersPerDevice, deviceFp.maxUsersPerIp, deviceFp.lookbackDays.</deliverable>
+    <status>done</status>
+  </task>
+
+  <task id="8.3">
+    <title>Implementar src/logic/circularity.ts com testes</title>
+    <deliverable>Função pura filterCircular + 6 testes unitários (par perfeito, tolerância, múltiplos pares, sem pares, ordem invertida, limites).</deliverable>
+    <status>done</status>
+  </task>
+
+  <task id="8.4">
+    <title>Integrar circularidade em computeScore + decide + explain</title>
+    <deliverable>Filtro rodado antes de freq/reg/bal; ScoreResult.raw.circ exposto; denialReason CIRCULARITY_SUSPECT se ratio > threshold; explicação cita ratio.</deliverable>
+    <status>done</status>
+  </task>
+
+  <task id="8.5">
+    <title>Fixture data/profiles/fraude-circular.json</title>
+    <deliverable>Perfil com ≥15 pares circulares e poucos créditos genuínos. Teste decide confirma CIRCULARITY_SUSPECT.</deliverable>
+    <status>done</status>
+  </task>
+
+  <task id="8.6">
+    <title>Model DeviceFingerprint + migration Postgres</title>
+    <deliverable>schema.prisma: DeviceFingerprint (userId, deviceHash?, ipHash, userAgent, firstSeenAt, lastSeenAt, indices). Migration aplicada.</deliverable>
+    <status>done</status>
+  </task>
+
+  <task id="8.7">
+    <title>src/api/fingerprint.ts + gate em POST /consent</title>
+    <deliverable>hashIp(salt), checkAndRegisterFingerprint(userId, deviceHash?, ip, ua) consulta janela e retorna bloqueio ou persiste. Zod schema aceita deviceHash?. FRAUD_SALT em .env.</deliverable>
+    <status>done</status>
+  </task>
+
+  <task id="8.8">
+    <title>Testes API tests/api/fraud.test.ts</title>
+    <deliverable>3 contas mesmo device OK, 4ª 429 device_limit_exceeded; 5 contas mesmo IP OK, 6ª 429 ip_limit_exceeded; flow.test.ts atualizado para variar deviceHash.</deliverable>
+    <status>done</status>
+  </task>
+
+  <task id="8.9">
+    <title>Atualizar STATE.md + HANDOFF.md</title>
+    <deliverable>Phase 8 done, totais, entregas verificadas, decisões, pontos de atenção (FRAUD_SALT em prod, LGPD base legal).</deliverable>
+    <status>done</status>
+  </task>
+</phase>
+
+---
+
+<phase id="7" name="Database Migration to PostgreSQL">
+  <objective>Reverter desvio SQLite e alinhar stack ao PROJECT.md (PostgreSQL) + RF-09/RN-04/§8 de REQUIREMENTS antes do deploy Render (Phase 6.2). Pré-requisito de release Alpha — SQLite no Render free tier é efêmero.</objective>
+
+  <task id="7.1">
+    <title>Baseline SQLite (46/46) antes da migração</title>
+    <deliverable>npm test verde em SQLite como linha de base</deliverable>
+    <status>done</status>
+  </task>
+
+  <task id="7.2">
+    <title>Provisionar Postgres local via Docker Compose</title>
+    <deliverable>docker-compose.yml (postgres:16-alpine, porta 5433), scripts/init-test-db.sql cria granafacil_dev e granafacil_test</deliverable>
+    <status>done</status>
+  </task>
+
+  <task id="7.3">
+    <title>Trocar provider Prisma e regenerar migration</title>
+    <deliverable>schema.prisma provider=postgresql, migration_lock.toml atualizado, migration `20260424133124_init` gerada. Migrations SQLite antigas removidas.</deliverable>
+    <status>done</status>
+  </task>
+
+  <task id="7.4">
+    <title>Adaptar test harness para Postgres</title>
+    <deliverable>tests/env.setup.ts usa DATABASE_URL postgresql://; tests/global.setup.ts faz `prisma db push --force-reset` entre suites (substitui unlinkSync do SQLite).</deliverable>
+    <status>done</status>
+  </task>
+
+  <task id="7.5">
+    <title>CI com service container Postgres</title>
+    <deliverable>.github/workflows/ci.yml com services.postgres:16-alpine + health-cmd + envs DATABASE_URL/TEST_DATABASE_URL.</deliverable>
+    <status>done</status>
+  </task>
+
+  <task id="7.6">
+    <title>Suite completa verde em Postgres + smoke</title>
+    <deliverable>46/46 vitest + scripts/smoke.ts verde (score=672 em aprovado-tipico)</deliverable>
+    <status>done</status>
+  </task>
+
+  <task id="7.7">
+    <title>Atualizar documentos GSD</title>
+    <deliverable>ROADMAP.md (nota em 3.1 + Phase 7), STATE.md (desvio #4 → Desvios Revertidos; Phase 7 no progresso), HANDOFF.md (pendências e pontos de atenção para deploy).</deliverable>
+    <status>done</status>
+  </task>
+</phase>
+
+---
+
 ## Ordem de Execução
 
-Phase 1 → 2 → 3 → 4 (3 e 4 podem paralelizar após 3.3) → 5 → 6.
+Phase 1 → 2 → 3 → 4 (3 e 4 podem paralelizar após 3.3) → 5 → 7 → 8 → 6.
+
+> Phase 7 foi inserida entre 5 e 6 após conclusão do Alpha feature-complete, para resolver o desvio SQLite antes do deploy em Render (6.2).
+> Phase 8 foi inserida após Phase 7 em resposta a sinais de fraude no Alpha (circularidade e múltiplas contas do mesmo aparelho).
 
 As **3 primeiras tasks de implementação** (1.2, 1.3, 1.4) estabelecem explicitamente o contrato de pastas `src/`, `data/` e `config/` antes de qualquer código de lógica ser escrito — respeitando a Modularidade Estrita e a arquitetura Data-Driven do PROJECT.md.

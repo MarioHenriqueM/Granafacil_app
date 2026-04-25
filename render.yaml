@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: openscore-gsd-api
+    name: granafacil-api
     env: node
     plan: free
     buildCommand: npm ci && npx prisma generate && npx prisma migrate deploy

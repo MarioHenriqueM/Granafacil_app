@@ -1,8 +1,8 @@
 {
-  "name": "openscore-gsd",
+  "name": "granafacil",
   "version": "0.1.0-alpha",
   "private": true,
-  "description": "OpenScore GSD — Motor de Crédito para a Economia Gig",
+  "description": "GranaFacil — Motor de Crédito para a Economia Gig",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/api/server.ts",

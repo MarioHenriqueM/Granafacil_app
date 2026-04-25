@@ -1,5 +1,5 @@
 import { computeScore } from './score.js';
-import type { Profile, RiskPreset, ScoreResult, Weights } from './types.js';
+import type { CircularityConfig, Profile, RiskPreset, ScoreResult, Weights } from './types.js';
 
 export interface LimitsConfig {
   credit: {
@@ -20,6 +20,7 @@ export interface LimitsConfig {
 
 export type DenialReason =
   | 'INSUFFICIENT_DATA'
+  | 'CIRCULARITY_SUSPECT'
   | 'LOW_FREQUENCY'
   | 'NEGATIVE_BALANCE'
   | 'LOW_BALANCE'
@@ -34,19 +35,24 @@ export interface Decision {
 }
 
 const LIMIT_STEP = 50;
+const DEFAULT_CIRCULARITY: CircularityConfig = { tolerancePct: 0.01, maxRatio: 0.5 };
 
 export function decide(
   profile: Profile,
   weights: Weights,
   preset: RiskPreset,
   limits: LimitsConfig,
+  antifraudConfig: CircularityConfig = DEFAULT_CIRCULARITY,
 ): Decision {
-  const scoreResult = computeScore(profile, weights);
+  const scoreResult = computeScore(profile, weights, antifraudConfig);
   const { score } = scoreResult;
-  const { freq, bal } = scoreResult.raw;
+  const { freq, bal, circ } = scoreResult.raw;
 
   if (profile.transactions.length < limits.analysis.minTransactionsRequired) {
     return { approved: false, score, denialReason: 'INSUFFICIENT_DATA', scoreResult };
+  }
+  if (circ.circularityRatio > antifraudConfig.maxRatio) {
+    return { approved: false, score, denialReason: 'CIRCULARITY_SUSPECT', scoreResult };
   }
   if (freq.entriesPerMonth < preset.minFrequencyEntriesPerMonth) {
     return { approved: false, score, denialReason: 'LOW_FREQUENCY', scoreResult };

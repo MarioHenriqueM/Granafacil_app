@@ -1,6 +1,6 @@
 Executive Summary
 
-Projeto: OpenScore GSD – Motor de Crédito para a Economia Gig.
+Projeto: GranaFacil – Motor de Crédito para a Economia Gig.
 Elevator Pitch: Uma plataforma de Open Finance projetada para fornecer aprovação de crédito instantânea via Pix para trabalhadores informais (Uber, iFood, autônomos). O sistema resolve a exclusão financeira ao substituir comprovantes de renda tradicionais por uma análise comportamental de fluxo de caixa e frequência de ganhos, garantindo decisões rápidas e explicáveis.
 Vision & Philosophy
 

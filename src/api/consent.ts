@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { createSession, requireAuth } from './auth.js';
 import { prisma } from './db.js';
+import { checkAndRegisterFingerprint } from './fingerprint.js';
 import { grantConsentSchema } from './schemas.js';
 
 export const consentRoutes: FastifyPluginAsync = async (app) => {
@@ -10,13 +11,34 @@ export const consentRoutes: FastifyPluginAsync = async (app) => {
     if (!parsed.success) {
       return reply.code(400).send({ error: 'invalid_body', issues: z.treeifyError(parsed.error) });
     }
-    const { email, scope } = parsed.data;
+    const { email, scope, deviceHash } = parsed.data;
 
     const user = await prisma.user.upsert({
       where: { email },
       update: {},
       create: { email },
     });
+
+    const fpResult = await checkAndRegisterFingerprint({
+      userId: user.id,
+      ip: req.ip,
+      deviceHash,
+      userAgent: req.headers['user-agent'],
+    });
+    if (!fpResult.ok) {
+      req.log.warn({
+        event: 'fraud.fingerprint_blocked',
+        reason: fpResult.reason,
+        distinctUsers: fpResult.distinctUsers,
+        limit: fpResult.limit,
+      });
+      return reply.code(429).send({
+        error: fpResult.reason,
+        distinctUsers: fpResult.distinctUsers,
+        limit: fpResult.limit,
+      });
+    }
+
     const consent = await prisma.consent.create({
       data: { userId: user.id, scope: JSON.stringify(scope) },
     });

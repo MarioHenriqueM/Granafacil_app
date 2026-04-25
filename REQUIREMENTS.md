@@ -1,4 +1,4 @@
-# REQUIREMENTS — OpenScore GSD
+# REQUIREMENTS — GranaFacil
 
 > Documento de requisitos derivado de [PROJECT.md](PROJECT.md).
 > Escopo: Alpha Version. Abordagem GSD (Get Stuff Done) + Data-Driven + Modularidade Estrita.
@@ -25,6 +25,8 @@ Entregar um motor de crédito comportamental para trabalhadores da economia gig,
 | RF-08 | O sistema deve simular trigger de pagamento Pix ao aprovar crédito (endpoint stub). | Core Loop → Action |
 | RF-09 | Histórico de decisões deve ser persistido em PostgreSQL para auditoria. | Tech Stack → PostgreSQL |
 | RF-10 | Handlers de integração externa (Uber/iFood/Bancos) devem ser isolados em `src/api/` com interface única. | System Architecture → api/ |
+| RF-11 | O motor de score deve neutralizar transações circulares (CREDIT+DEBIT do mesmo valor no mesmo dia) antes de calcular frequência/regularidade/saldo, evitando inflação artificial por circulação de dinheiro. | Sinal de campo (fraude Alpha) |
+| RF-12 | O endpoint de consentimento deve capturar e cruzar fingerprint de dispositivo (hash de device + hash de IP + user-agent) e bloquear criação de múltiplas contas a partir do mesmo aparelho/IP dentro de janela configurável. | Sinal de campo (fraude Alpha) |
 
 ---
 
@@ -52,6 +54,8 @@ Entregar um motor de crédito comportamental para trabalhadores da economia gig,
 - **RN-03** — Negação automática se: frequência de entradas < limiar mínimo OU saldo médio negativo em > 30% do período.
 - **RN-04** — Aprovação gera registro `decision_log` (PostgreSQL) com hash do snapshot de dados usado.
 - **RN-05** — Revogação de consentimento deve invalidar decisões futuras, mas preservar histórico de auditoria.
+- **RN-06** — *Circularidade*: para cada dia UTC, pares CREDIT/DEBIT cujo valor absoluto difira em ≤ `tolerancePct` (padrão 1%) são removidos da série antes do score. Se `pairsRemoved / totalCredits > 0.5`, decisão é negada com motivo `CIRCULARITY_SUSPECT`. Parâmetros em `config/antifraud.json`.
+- **RN-07** — *Device fingerprinting*: ao solicitar `/consent`, o sistema registra `{deviceHash?, ipHash, userAgent}` (IP armazenado como SHA-256 com salt — nunca em claro). Se em janela de `lookbackDays` (padrão 7d) o mesmo `deviceHash` aparece associado a > `maxUsersPerDevice` (padrão 3) usuários distintos, ou o mesmo `ipHash` a > `maxUsersPerIp` (padrão 20, tolerante por causa de CGNAT/coworking), a criação da conta é bloqueada com HTTP 429.
 
 ---
 
@@ -104,6 +108,7 @@ Verificação cruzada entre PROJECT.md e viabilidade real:
 5. **⚠ `config/` mencionado como portador de "chaves de API".** Conflito com boas práticas de segurança. → Resolvido em **RNF-05**: `config/` só guarda parâmetros de risco; credenciais via `.env` (não versionado).
 6. **⚠ Vercel + Render** — Vercel é serverless (cold start) e não é ideal para workers longos do motor. → **Mitigação:** motor no Render (long-lived Node); frontend no Vercel. Documentar boundary.
 7. **⚠ Ausência de definição de autenticação de usuário.** Não especificado em PROJECT.md. → Adicionar na fase de hardening (ROADMAP Phase 6); Alpha pode usar magic-link ou OAuth social.
+8. **⚠ Antifraude não previsto no PROJECT.md.** Sinais de campo (Alpha) mostraram circularidade artificial para inflar score e criação de múltiplas contas do mesmo aparelho. → Adicionado RF-11/RF-12 e RN-06/RN-07; implementação em Phase 8 (circularity filter + device fingerprinting). Base legal LGPD: prevenção à fraude / proteção ao crédito (art. 7º, IX e X).
 
 ---
 

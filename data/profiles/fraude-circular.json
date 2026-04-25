@@ -1,0 +1,33 @@
+{
+  "_comment": "Mock Open Finance Brasil (schema fase 2). Perfil: fraude por circularidade — valores iguais CREDIT+DEBIT no mesmo dia inflam artificialmente o score. Deve ser negado com motivo CIRCULARITY_SUSPECT (RN-06).",
+  "profileId": "fraude-circular",
+  "persona": "Tentativa de inflar score via circulação artificial",
+  "cpf": "***.***.***-**",
+  "windowDays": 90,
+  "transactions": [
+    { "date": "2026-01-02", "type": "CREDIT", "amount": 500.00, "source": "PIX-entrada" },
+    { "date": "2026-01-02", "type": "DEBIT",  "amount": 500.00, "source": "PIX-saida" },
+    { "date": "2026-01-03", "type": "CREDIT", "amount": 500.00, "source": "PIX-entrada" },
+    { "date": "2026-01-03", "type": "DEBIT",  "amount": 500.00, "source": "PIX-saida" },
+    { "date": "2026-01-04", "type": "CREDIT", "amount": 500.00, "source": "PIX-entrada" },
+    { "date": "2026-01-04", "type": "DEBIT",  "amount": 500.00, "source": "PIX-saida" },
+    { "date": "2026-01-05", "type": "CREDIT", "amount": 500.00, "source": "PIX-entrada" },
+    { "date": "2026-01-05", "type": "DEBIT",  "amount": 500.00, "source": "PIX-saida" },
+    { "date": "2026-01-06", "type": "CREDIT", "amount": 500.00, "source": "PIX-entrada" },
+    { "date": "2026-01-06", "type": "DEBIT",  "amount": 500.00, "source": "PIX-saida" },
+    { "date": "2026-01-07", "type": "CREDIT", "amount": 500.00, "source": "PIX-entrada" },
+    { "date": "2026-01-07", "type": "DEBIT",  "amount": 500.00, "source": "PIX-saida" },
+    { "date": "2026-01-08", "type": "CREDIT", "amount": 500.00, "source": "PIX-entrada" },
+    { "date": "2026-01-08", "type": "DEBIT",  "amount": 500.00, "source": "PIX-saida" },
+    { "date": "2026-01-09", "type": "CREDIT", "amount": 500.00, "source": "PIX-entrada" },
+    { "date": "2026-01-09", "type": "DEBIT",  "amount": 500.00, "source": "PIX-saida" },
+    { "date": "2026-01-10", "type": "CREDIT", "amount": 500.00, "source": "PIX-entrada" },
+    { "date": "2026-01-10", "type": "DEBIT",  "amount": 500.00, "source": "PIX-saida" },
+    { "date": "2026-01-11", "type": "CREDIT", "amount": 500.00, "source": "PIX-entrada" },
+    { "date": "2026-01-11", "type": "DEBIT",  "amount": 500.00, "source": "PIX-saida" },
+    { "date": "2026-01-12", "type": "CREDIT", "amount": 500.00, "source": "PIX-entrada" },
+    { "date": "2026-01-12", "type": "DEBIT",  "amount": 500.00, "source": "PIX-saida" },
+    { "date": "2026-01-14", "type": "CREDIT", "amount": 120.00, "source": "Uber" },
+    { "date": "2026-01-20", "type": "CREDIT", "amount": 90.00,  "source": "iFood" }
+  ]
+}

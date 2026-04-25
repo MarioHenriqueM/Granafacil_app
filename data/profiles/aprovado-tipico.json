@@ -1,7 +1,17 @@
 {
   "_comment": "Mock Open Finance Brasil (schema fase 2 — transacional). Perfil: aprovação típica.",
   "profileId": "aprovado-tipico",
-  "persona": "Motorista de app — renda estável",
+  "persona": "João Silva, 34 anos — motorista Uber há 3 anos (São Paulo, SP)",
+  "client": {
+    "name": "João Silva",
+    "age": 34,
+    "city": "São Paulo, SP",
+    "occupation": "Motorista de aplicativo (Uber + iFood Entregas)",
+    "tenureYears": 3,
+    "familyStatus": "Casado, 1 filho de 6 anos",
+    "goal": "Solicita R$ 1.500 para troca de pneus e revisão preventiva do veículo",
+    "bio": "Trabalha 6 dias por semana em turnos manhã (06h–11h) e noite (18h–23h). 100% da renda mensal vem de apps de mobilidade e entrega. Possui CNH categoria B há 8 anos, veículo próprio quitado (Onix 2019). Histórico estável de saldo positivo nos últimos 12 meses."
+  },
   "cpf": "***.***.***-**",
   "windowDays": 90,
   "transactions": [

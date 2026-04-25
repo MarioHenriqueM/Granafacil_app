@@ -6,9 +6,10 @@ interface Props {
 }
 
 const PROFILES = [
-  { id: 'aprovado-tipico', label: 'Aprovado típico (motorista estável)' },
-  { id: 'borderline', label: 'Borderline (entregador oscilante)' },
-  { id: 'negado-tipico', label: 'Negado típico (renda esporádica)' },
+  { id: 'aprovado-tipico', label: 'João Silva, 34 — motorista Uber estável (aprovação)' },
+  { id: 'borderline', label: 'Borderline — entregador oscilante (limite no fio)' },
+  { id: 'negado-tipico', label: 'Pedro Almeida, 28 — renda esporádica (negação)' },
+  { id: 'fraude-circular', label: 'Fraude circular — PIX entra+sai no mesmo dia' },
 ];
 
 export function IngestStep({ onIngested }: Props) {

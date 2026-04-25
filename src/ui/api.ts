@@ -1,10 +1,45 @@
-const TOKEN_KEY = 'openscore.sessionToken';
+const TOKEN_KEY = 'granafacil.sessionToken';
+const DEVICE_HASH_KEY = 'granafacil.deviceHash';
 
 function getToken(): string | null {
   try {
     return window.localStorage.getItem(TOKEN_KEY);
   } catch {
     return null;
+  }
+}
+
+async function computeDeviceHash(): Promise<string | undefined> {
+  try {
+    const cached = window.localStorage.getItem(DEVICE_HASH_KEY);
+    if (cached) return cached;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    let canvasFp = '';
+    if (ctx) {
+      ctx.textBaseline = 'top';
+      ctx.font = '14px Arial';
+      ctx.fillText('granafacil-fp', 2, 2);
+      canvasFp = canvas.toDataURL();
+    }
+    const input =
+      canvasFp +
+      '|' +
+      navigator.userAgent +
+      '|' +
+      navigator.language +
+      '|' +
+      `${screen.width}x${screen.height}` +
+      '|' +
+      new Date().getTimezoneOffset();
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+    const hex = Array.from(new Uint8Array(buf))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+    window.localStorage.setItem(DEVICE_HASH_KEY, hex);
+    return hex;
+  } catch {
+    return undefined;
   }
 }
 
@@ -66,15 +101,19 @@ export interface PixResponse {
 
 export const api = {
   grantConsent: async (email: string, scope: Record<string, boolean>) => {
+    const deviceHash = await computeDeviceHash();
     const r = await request<GrantConsentResponse>('/consent', {
       method: 'POST',
-      body: JSON.stringify({ email, scope }),
+      body: JSON.stringify({ email, scope, ...(deviceHash ? { deviceHash } : {}) }),
     });
     setToken(r.sessionToken);
     return r;
   },
   revokeConsent: async () => {
     await request<{ revoked: number }>('/consent/me', { method: 'DELETE' });
+    setToken(null);
+  },
+  clearSession: () => {
     setToken(null);
   },
   ingest: (profileId: string) =>

@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { api } from '../api.js';
 
 interface Props {
-  onGranted: () => void;
+  onGranted: (email: string) => void;
 }
 
 const SCOPES = [
@@ -27,7 +27,7 @@ export function ConsentStep({ onGranted }: Props) {
     setLoading(true);
     try {
       await api.grantConsent(email, scope);
-      onGranted();
+      onGranted(email);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao registrar consentimento');
     } finally {
